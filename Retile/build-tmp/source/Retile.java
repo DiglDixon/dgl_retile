@@ -21,12 +21,15 @@ No need for controls, just go keys.
 */
 
 Tile[] tiles;
+int tileCountX, tileCountY;
 ArrayList grabbedTiles;
 int tileSize = 50;
 
 PImage backgroundImage;
 PGraphics canvas;
 PGraphics ui;
+
+SelectionBuilder allSelect;
 
 public void setup(){
 	
@@ -36,6 +39,8 @@ public void setup(){
     grabbedTiles = new ArrayList<Tile>();
     drawBackgroundImage();
     reTile();
+    float[] weight = {1.0f};
+    allSelect = new SelectionBuilder(new Selection(tiles, weight, tileCountX, tileCountY));
 }
 
 public void drawBackgroundImage(){
@@ -61,16 +66,16 @@ public void reTile(){
 }
 
 public void reTile(int size){
-	int divX = floor(width / size);
-	int divY = floor(height / size);
-	tiles = new Tile[divX*divY];
+	tileCountX = floor(width / size);
+	tileCountY = floor(height / size);
+	tiles = new Tile[tileCountX*tileCountY];
 	int x;
 	int y;
-	for(int k = 0; k<divX; k++){
-		for(int j = 0; j<divY; j++){
+	for(int k = 0; k<tileCountX; k++){
+		for(int j = 0; j<tileCountY; j++){
 			x = k * size;
 			y = j * size;
-			tiles[k+j*divX] = new Tile(x, y, canvas.get(x, y, size, size));
+			tiles[k+j*tileCountX] = new Tile(x, y, canvas.get(x, y, size, size));
 		}
 	}
 }
@@ -85,32 +90,23 @@ public void displayUI(){
 
 public void mousePressed(){
 	PVector mousePosition = new PVector(mouseX, mouseY);
-	grabTiles(mousePosition, 300);
+	Selection selection = allSelect.selectRadial(mouseX, mouseY, 150);
+	grabSelction(selection);
+}
+
+public void grabSelction(Selection selection){
+	for(int k = 0; k<selection.contents.length; k++){
+		selection.contents[k].grab();
+	}
+}
+
+public void releaseSelection(Selection selection){
+	for(int k = 0; k<selection.contents.length; k++){
+		selection.contents[k].release();
+	}
 }
 
 public void mouseReleased(){
-	releaseTiles();
-}
-
-public void grabTiles(PVector position, float range){
-	PVector tileCentre;
-	for(int k = 0; k<tiles.length; k++){
-		tileCentre = tiles[k].centrePosition();
-		if(position.dist(tileCentre) < range){
-			grabbedTiles.add(tiles[k]);
-			tiles[k].grab();
-		}
-	}
-	println("Tile grab completed, size: "+grabbedTiles.size());
-}
-
-public void releaseTiles(){
-	Tile t;
-	for(int k =0 ; k<grabbedTiles.size();k++){
-		t = (Tile) grabbedTiles.get(k);
-		t.release();
-	}
-	grabbedTiles.clear();
 }
 
 public void keyPressed() {
@@ -146,6 +142,79 @@ public void numberKeyPressed(int n){
 
 //
 
+// data structure
+class Selection{
+	public Tile[] contents;
+	public float[] weights;
+	public int arrayWidth;
+	public int arrayHeight;
+
+	public Selection(Tile[] contents, float[] weights, int w, int h){
+		this.contents = contents;
+		this.weights = weights;
+		this.arrayWidth = w;
+		this.arrayHeight = h;
+	}
+}
+
+class EmptySelection extends Selection{
+	public EmptySelection(){
+		super(new Tile[0], new float[0], 0, 0);
+	}
+}
+
+
+
+class SelectionBuilder{
+
+	Selection sampleSelection;
+
+	public SelectionBuilder(Selection defaultSampleSelection){
+		setSampleSelection(defaultSampleSelection);
+	}
+
+	public void setSampleSelection(Selection newSampleSelection){
+		sampleSelection = newSampleSelection;
+	}
+
+	public Selection selectSingleTile(float x, float y){
+		Tile[] hitTile = new Tile[1];
+		float[] weight = {1.0f};
+		for(int k = 0; k<sampleSelection.contents.length;k++){
+			if(sampleSelection.contents[k].containsPoint(x, y)){
+				hitTile[0] = sampleSelection.contents[k];
+				return new Selection(hitTile, weight, sampleSelection.arrayWidth, sampleSelection.arrayHeight);
+			}
+		}
+		return new EmptySelection();
+	}
+
+	public Selection selectRadial(float x, float y, float radius){
+		float inv_radius = 1/radius;
+
+		float[] weights = new float[sampleSelection.contents.length];
+		int[] hitIndices = new int[sampleSelection.contents.length];
+		int hitCount = 0;
+		PVector tileCentrePosition;
+		float distance;
+		for(int k = 0; k<sampleSelection.contents.length; k++){
+			tileCentrePosition = sampleSelection.contents[k].centrePosition();
+			distance = dist(x, y, tileCentrePosition.x, tileCentrePosition.y);
+			if(distance < radius){
+				hitIndices[hitCount] = k;
+				weights[hitCount] = distance * inv_radius;
+				hitCount++;
+			}
+		}
+		Tile[] hitTiles = new Tile[hitCount];
+		for(int k = 0; k < hitCount; k++){
+			hitTiles[k] = sampleSelection.contents[hitIndices[k]];
+		}
+		return new Selection(hitTiles, weights, sampleSelection.arrayWidth, sampleSelection.arrayHeight);
+	}
+
+}
+
 
 class Tile{
 
@@ -173,6 +242,10 @@ class Tile{
 		return PVector.add(position, PVector.mult(size, 0.5f));
 	}
 
+	public boolean containsPoint(float x, float y){
+		return (x > position.x && y > position.y && x<position.x+size.x && y<position.y+size.y);
+	}
+
 	public void display(PGraphics pg){
 		pg.pushMatrix();
 		pg.translate(position.x+size.x*0.5f, position.y+size.y*0.5f);
@@ -185,10 +258,24 @@ class Tile{
 			pg.rect(-size.x*0.5f, -size.y*0.5f, size.x, size.y);
 		}
 		pg.popMatrix();
-
 	}
 
 
+
+}
+
+
+class Manipulator{
+
+	public Manipulator(){
+
+	}
+
+	public void rotateSelection(Selection sel){
+		
+	}
+
+	
 
 }
     public void settings() { 	size(1080, 1080); }

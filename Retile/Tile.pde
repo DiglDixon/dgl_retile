@@ -26,6 +26,10 @@ class Tile{
 		return PVector.add(position, PVector.mult(size, 0.5));
 	}
 
+	public boolean containsPoint(float x, float y){
+		return (x > position.x && y > position.y && x<position.x+size.x && y<position.y+size.y);
+	}
+
 	public void display(PGraphics pg){
 		pg.pushMatrix();
 		pg.translate(position.x+size.x*0.5, position.y+size.y*0.5);
@@ -38,7 +42,6 @@ class Tile{
 			pg.rect(-size.x*0.5, -size.y*0.5, size.x, size.y);
 		}
 		pg.popMatrix();
-
 	}
 
 
