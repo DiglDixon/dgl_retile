@@ -4,6 +4,7 @@ No need for controls, just go keys.
 
 */
 
+PApplet SKETCH = this;
 Tile[] tiles;
 int tileCountX, tileCountY;
 ArrayList grabbedTiles;
@@ -11,14 +12,16 @@ int tileSize = 50;
 
 PImage backgroundImage;
 PGraphics canvas;
-PGraphics ui;
 
 SelectionBuilder allSelect;
 
+Selection cSelection = new EmptySelection();
+Mutator cMutator = new PositionMutator();
+
 void setup(){
-	size(1080, 1080);
-	canvas = createGraphics(width, height);
-	ui = createGraphics(width, height);
+	size(1080, 1080, P2D);
+	UI.initialise();
+	canvas = createGraphics(width, height, P2D);
     backgroundImage = loadImage("monet.jpg");
     grabbedTiles = new ArrayList<Tile>();
     drawBackgroundImage();
@@ -35,14 +38,15 @@ void drawBackgroundImage(){
 
 
 void draw(){
+
+	cMutator.mutate(cSelection);
+
 	canvas.beginDraw();
 	canvas.background(0);
-	for(int k = 0; k<tiles.length;k++){
-		tiles[k].display(canvas);
-	}
+	displayTiles(canvas);
 	canvas.endDraw();
 	image(canvas, 0, 0);
-	displayUI();
+	UI.display();
 }
 
 void reTile(){
@@ -50,6 +54,7 @@ void reTile(){
 }
 
 void reTile(int size){
+	println("Re-tiling...");
 	tileCountX = floor(width / size);
 	tileCountY = floor(height / size);
 	tiles = new Tile[tileCountX*tileCountY];
@@ -64,19 +69,35 @@ void reTile(int size){
 	}
 }
 
-void displayUI(){
-	ui.beginDraw();
-	ui.clear();
-	ui.text("fps: "+frameRate, 50, 50);
-	ui.endDraw();
-	image(ui, 0, 0);
+void displayTiles(PGraphics pg){
+	for(int k = 0; k<tiles.length;k++){
+		tiles[k].display(pg);
+	}
 }
 
+
+
 void mousePressed(){
-	PVector mousePosition = new PVector(mouseX, mouseY);
-	Selection selection = allSelect.selectRadial(mouseX, mouseY, 150);
-	grabSelection(selection);
+	Input.mousePressed();
+	refreshRadialSelection();
 }
+
+void mouseDragged(){
+	refreshRadialSelection();
+}
+
+void refreshRadialSelection(){
+	releaseSelection(cSelection);
+	cSelection = allSelect.selectRadial(mouseX, mouseY, 150);
+	grabSelection(cSelection);
+}
+
+void mouseReleased(){
+	Input.mouseReleased();
+	releaseSelection(cSelection);
+	cSelection = new EmptySelection();
+}
+
 
 void grabSelection(Selection selection){
 	for(int k = 0; k<selection.contents.length; k++){
@@ -90,8 +111,6 @@ void releaseSelection(Selection selection){
 	}
 }
 
-void mouseReleased(){
-}
 
 void keyPressed() {
     switch(key) {

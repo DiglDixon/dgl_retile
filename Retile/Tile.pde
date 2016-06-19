@@ -1,17 +1,20 @@
 
-
 class Tile{
 
 	private PVector position;
 	private PVector size;
 	private float rotation;
-	private PImage tileImage;
+	private PImage tileImage = createImage(1, 1, ARGB);
 	private boolean grabbed = false;
 
 	public Tile(float x, float y, PImage img){
 		tileImage = img;
 		position = new PVector(x, y);
 		size = new PVector(img.width, img.height);
+	}
+
+	public void move(PVector velocity){
+		position.add(velocity);
 	}
 
 	public void grab(){
@@ -37,8 +40,8 @@ class Tile{
 		pg.image(tileImage, -size.x*0.5, -size.y*0.5);
 		if(grabbed){
 			pg.noFill();
-			pg.stroke(255, 0, 0);
-			pg.strokeWeight(3);
+			pg.stroke(255, 20);
+			pg.strokeWeight(1);
 			pg.rect(-size.x*0.5, -size.y*0.5, size.x, size.y);
 		}
 		pg.popMatrix();

@@ -20,6 +20,7 @@ No need for controls, just go keys.
 
 */
 
+PApplet SKETCH = this;
 Tile[] tiles;
 int tileCountX, tileCountY;
 ArrayList grabbedTiles;
@@ -27,14 +28,16 @@ int tileSize = 50;
 
 PImage backgroundImage;
 PGraphics canvas;
-PGraphics ui;
 
 SelectionBuilder allSelect;
 
+Selection cSelection = new EmptySelection();
+Mutator cMutator = new PositionMutator();
+
 public void setup(){
 	
-	canvas = createGraphics(width, height);
-	ui = createGraphics(width, height);
+	UI.initialise();
+	canvas = createGraphics(width, height, P2D);
     backgroundImage = loadImage("monet.jpg");
     grabbedTiles = new ArrayList<Tile>();
     drawBackgroundImage();
@@ -51,14 +54,15 @@ public void drawBackgroundImage(){
 
 
 public void draw(){
+
+	cMutator.mutate(cSelection);
+
 	canvas.beginDraw();
 	canvas.background(0);
-	for(int k = 0; k<tiles.length;k++){
-		tiles[k].display(canvas);
-	}
+	displayTiles(canvas);
 	canvas.endDraw();
 	image(canvas, 0, 0);
-	displayUI();
+	UI.display();
 }
 
 public void reTile(){
@@ -66,6 +70,7 @@ public void reTile(){
 }
 
 public void reTile(int size){
+	println("Re-tiling...");
 	tileCountX = floor(width / size);
 	tileCountY = floor(height / size);
 	tiles = new Tile[tileCountX*tileCountY];
@@ -80,21 +85,37 @@ public void reTile(int size){
 	}
 }
 
-public void displayUI(){
-	ui.beginDraw();
-	ui.clear();
-	ui.text("fps: "+frameRate, 50, 50);
-	ui.endDraw();
-	image(ui, 0, 0);
+public void displayTiles(PGraphics pg){
+	for(int k = 0; k<tiles.length;k++){
+		tiles[k].display(pg);
+	}
 }
+
+
 
 public void mousePressed(){
-	PVector mousePosition = new PVector(mouseX, mouseY);
-	Selection selection = allSelect.selectRadial(mouseX, mouseY, 150);
-	grabSelction(selection);
+	Input.mousePressed();
+	refreshRadialSelection();
 }
 
-public void grabSelction(Selection selection){
+public void mouseDragged(){
+	refreshRadialSelection();
+}
+
+public void refreshRadialSelection(){
+	releaseSelection(cSelection);
+	cSelection = allSelect.selectRadial(mouseX, mouseY, 150);
+	grabSelection(cSelection);
+}
+
+public void mouseReleased(){
+	Input.mouseReleased();
+	releaseSelection(cSelection);
+	cSelection = new EmptySelection();
+}
+
+
+public void grabSelection(Selection selection){
 	for(int k = 0; k<selection.contents.length; k++){
 		selection.contents[k].grab();
 	}
@@ -106,8 +127,6 @@ public void releaseSelection(Selection selection){
 	}
 }
 
-public void mouseReleased(){
-}
 
 public void keyPressed() {
     switch(key) {
@@ -141,6 +160,72 @@ public void numberKeyPressed(int n){
 
 
 //
+
+// pseudo-static
+_Input Input = new _Input();
+public class _Input{
+
+	public PVector mouseVelocity = new PVector();
+	public PVector mousePosition = new PVector();
+	public float mouseX;
+	public float mouseY;
+
+	public boolean mouseDown = false;
+
+	public _Input(){
+		registerMethod("draw", this);
+	}
+
+	public void draw(){
+
+		this.mouseVelocity.x = SKETCH.mouseX - this.mouseX;
+		this.mouseVelocity.y = SKETCH.mouseY - this.mouseY;
+
+		this.mouseX = SKETCH.mouseX;
+		this.mouseY = SKETCH.mouseY;
+		mousePosition.x = this.mouseX;
+		mousePosition.y = this.mouseY;
+	}
+
+	public void keyPressed(char key){
+
+	}
+	public void keyReleased(char key){
+
+	}
+	public void mousePressed(){
+		mouseDown = true;
+	}
+	public void mouseReleased(){
+		mouseDown = false;
+	}
+
+}
+
+interface Mutator{
+	public void mutate(Selection selection);
+}
+
+class NullMutator implements Mutator{
+	public void mutate(Selection selection){
+		// Nothing
+	}
+}
+
+class PositionMutator implements Mutator{
+
+	public PositionMutator(){
+
+	}
+
+	public void mutate(Selection selection){
+		for(int k = 0; k<selection.contents.length; k++){
+			// selection.contents[k].move(PVector.mult(Input.mouseVelocity, selection.weights[k]));
+			selection.contents[k].move(PVector.mult(Input.mouseVelocity, selection.weights[k]));
+		}
+	}
+
+}
 
 // data structure
 class Selection{
@@ -215,19 +300,22 @@ class SelectionBuilder{
 
 }
 
-
 class Tile{
 
 	private PVector position;
 	private PVector size;
 	private float rotation;
-	private PImage tileImage;
+	private PImage tileImage = createImage(1, 1, ARGB);
 	private boolean grabbed = false;
 
 	public Tile(float x, float y, PImage img){
 		tileImage = img;
 		position = new PVector(x, y);
 		size = new PVector(img.width, img.height);
+	}
+
+	public void move(PVector velocity){
+		position.add(velocity);
 	}
 
 	public void grab(){
@@ -253,8 +341,8 @@ class Tile{
 		pg.image(tileImage, -size.x*0.5f, -size.y*0.5f);
 		if(grabbed){
 			pg.noFill();
-			pg.stroke(255, 0, 0);
-			pg.strokeWeight(3);
+			pg.stroke(255, 20);
+			pg.strokeWeight(1);
 			pg.rect(-size.x*0.5f, -size.y*0.5f, size.x, size.y);
 		}
 		pg.popMatrix();
@@ -264,21 +352,27 @@ class Tile{
 
 }
 
-
-class Manipulator{
-
-	public Manipulator(){
-
-	}
-
-	public void rotateSelection(Selection sel){
-		
-	}
-
+//pseudo-static
+_UI UI = new _UI();
+public class _UI{
+	PGraphics ui;
 	
+	public _UI(){
+	}
 
+	public void initialise(){
+		ui = createGraphics(width, height, P2D);
+	}
+
+	public void display(){
+		ui.beginDraw();
+		ui.clear();
+		ui.text("fps: "+frameRate, 50, 50);
+		ui.endDraw();
+		image(ui, 0, 0);
+	}
 }
-    public void settings() { 	size(1080, 1080); }
+    public void settings() { 	size(1080, 1080, P2D); }
     static public void main(String[] passedArgs) {
         String[] appletArgs = new String[] { "Retile" };
         if (passedArgs != null) {
