@@ -6,6 +6,8 @@ class Tile{
 	private float rotation;
 	private PImage tileImage;
 	private boolean grabbed = false;
+	private color[] edgeColoursTop;
+	private color[] edgeColoursLeft;
 
 	public Tile(){
 		position = new PVector();
@@ -37,16 +39,31 @@ class Tile{
 		tileImage.loadPixels();
 		int x = floor(position.x);
 		int y = floor(position.y);
+		int samplePixelIndex;
 		for(int k = 0; k<tileImage.width; k++){
 			for(int j = 0; j<tileImage.height; j++){
-				tileImage.pixels[k + tileImage.width*j] = baseImage.pixels[(x+k)+(y+j)*baseImage.width];
+				tileImage.pixels[k + tileImage.width*j] = baseImage.pixels[(x+k) + (y+j) * baseImage.width];
 			}
 		}
 		tileImage.updatePixels();
+
+		edgeColoursTop = new color[tileImage.width];
+		edgeColoursLeft = new color[tileImage.height];
+		for(int k = 0; k<tileImage.width; k++){
+			edgeColoursTop[k] = baseImage.pixels[(x+k) + y*baseImage.width];
+		}
+		for(int j = 0; j<tileImage.height; j++){
+			edgeColoursLeft[j] = baseImage.pixels[x + (y+j)*baseImage.width];
+		}
+
 	}
 
 	public void move(PVector velocity){
 		position.add(velocity);
+	}
+
+	public void rotate(float rotationAdd){
+		rotation+=rotationAdd;
 	}
 
 	public void grab(){
@@ -66,16 +83,44 @@ class Tile{
 	}
 
 	public void display(PGraphics pg){
+		pushTransformToGraphics(pg);
+		// displayTile(pg);
+		displayStrings(pg);
+		if(grabbed){
+			displayGrabUI(pg);
+		}
+		popTransformFromGraphics(pg);
+	}
+
+	private void displayTile(PGraphics pg){
+		pg.image(tileImage, -size.x*0.5, -size.y*0.5);
+	}
+
+	private void displayGrabUI(PGraphics pg){
+		pg.noFill();
+		pg.stroke(255, 50);
+		pg.strokeWeight(1);
+		pg.rect(-size.x*0.5, -size.y*0.5, size.x, size.y);
+	}
+
+	private void displayStrings(PGraphics pg){
+		for(int k = 0; k<edgeColoursTop.length; k++){
+			pg.stroke(edgeColoursTop[k]);
+			pg.line(-size.x*0.5+k, -size.y*0.5, -size.x*0.5+k, -size.y*0.5 - 10);
+		}
+		for(int j = 0; j<edgeColoursLeft.length; j++){
+			pg.stroke(edgeColoursLeft[j]);
+			pg.line(-size.x*0.5, -size.y*0.5+j, -size.x*0.5 - 10, -size.y*0.5+j);
+		}
+	}
+
+	private void pushTransformToGraphics(PGraphics pg){
 		pg.pushMatrix();
 		pg.translate(position.x+size.x*0.5, position.y+size.y*0.5);
 		pg.rotate(rotation);
-		pg.image(tileImage, -size.x*0.5, -size.y*0.5);
-		if(grabbed){
-			pg.noFill();
-			pg.stroke(255, 20);
-			pg.strokeWeight(1);
-			pg.rect(-size.x*0.5, -size.y*0.5, size.x, size.y);
-		}
+	}
+
+	private void popTransformFromGraphics(PGraphics pg){
 		pg.popMatrix();
 	}
 

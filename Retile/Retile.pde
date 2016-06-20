@@ -1,6 +1,12 @@
 /* 
-Pre-loaded high res images.
-No need for controls, just go keys.
+
+- drawing strings, maybe just to proximate, too
+- drawing curvy strings...
+- static strings look great! Some great results with rotation
+- Navier Stokes could be insane, esp at low tile sizes. Will probs replace radial selection
+
+- a shader would help our efficiency massively.
+	- images readfrom the same buffer, just with different texture coordinates
 
 */
 
@@ -8,6 +14,7 @@ PApplet SKETCH = this;
 
 int tileCountX, tileCountY;
 int tileSize = 50;
+int iterationSteps = 1;
 
 Selection onscreenTiles = new EmptySelection();
 
@@ -52,9 +59,9 @@ void draw(){
 	cMutator.mutate(cSelection);
 
 	canvas.beginDraw();
-	canvas.background(0);
+	// canvas.background(0);
 
-	for(int k = 0; k<onscreenTiles.contents.length;k++){
+	for(int k = (frameCount%iterationSteps); k<onscreenTiles.contents.length; k+=iterationSteps){
 		onscreenTiles.contents[k].display(canvas);
 	}
 
@@ -101,9 +108,6 @@ void releaseSelection(Selection selection){
 
 void keyPressed() {
     switch(key) {
-    	case ' ':
-    	reTile();
-    	break;
         case '0':
         case '1':
         case '2':
@@ -116,6 +120,14 @@ void keyPressed() {
         case '9':
         numberKeyPressed(Integer.parseInt(key+""));
         break;
+    	case ' ':
+    	reTile();
+    	break;
+    	case 'r':
+    		cMutator = new RotationMutator();
+    	break;
+    	case 'v':
+    		cMutator = new PositionMutator();
         default:
         //unknown key
         break;
@@ -125,6 +137,11 @@ void keyPressed() {
 void numberKeyPressed(int n){
 	if(n>0){
 		tileSize = n*10;
+		if(tileSize <= 20){
+			iterationSteps = 1;
+		}else{
+			iterationSteps = 1;
+		}
 		println("Changed tile size: "+tileSize);
 	}
 }
