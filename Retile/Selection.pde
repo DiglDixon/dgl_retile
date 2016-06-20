@@ -14,20 +14,30 @@ class Selection{
 	}
 }
 
+class WeightlessSelection extends Selection{
+	public WeightlessSelection(Tile[] contents, int w, int h){
+		super(contents, new float[contents.length], w, h);
+		for(int k = 0; k<weights.length; k++){
+			weights[k] = 1;
+		}
+	}
+
+}
+
 class EmptySelection extends Selection{
 	public EmptySelection(){
 		super(new Tile[0], new float[0], 0, 0);
 	}
 }
 
-
-
-class SelectionBuilder{
+// pseudo-static
+_SelectionBuilder SelectionBuilder = new _SelectionBuilder();
+class _SelectionBuilder{
 
 	Selection sampleSelection;
 
-	public SelectionBuilder(Selection defaultSampleSelection){
-		setSampleSelection(defaultSampleSelection);
+	public _SelectionBuilder(){
+		setSampleSelection(new EmptySelection());
 	}
 
 	public void setSampleSelection(Selection newSampleSelection){
@@ -36,11 +46,10 @@ class SelectionBuilder{
 
 	public Selection selectSingleTile(float x, float y){
 		Tile[] hitTile = new Tile[1];
-		float[] weight = {1.0};
 		for(int k = 0; k<sampleSelection.contents.length;k++){
 			if(sampleSelection.contents[k].containsPoint(x, y)){
 				hitTile[0] = sampleSelection.contents[k];
-				return new Selection(hitTile, weight, sampleSelection.arrayWidth, sampleSelection.arrayHeight);
+				return new WeightlessSelection(hitTile, sampleSelection.arrayWidth, sampleSelection.arrayHeight);
 			}
 		}
 		return new EmptySelection();
@@ -56,10 +65,10 @@ class SelectionBuilder{
 		float distance;
 		for(int k = 0; k<sampleSelection.contents.length; k++){
 			tileCentrePosition = sampleSelection.contents[k].centrePosition();
-			distance = dist(x, y, tileCentrePosition.x, tileCentrePosition.y);
+			distance = dist(tileCentrePosition.x, tileCentrePosition.y, x, y);
 			if(distance < radius){
 				hitIndices[hitCount] = k;
-				weights[hitCount] = distance * inv_radius;
+				weights[hitCount] = (radius-distance) * inv_radius;
 				hitCount++;
 			}
 		}

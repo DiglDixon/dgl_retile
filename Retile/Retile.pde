@@ -5,35 +5,45 @@ No need for controls, just go keys.
 */
 
 PApplet SKETCH = this;
-Tile[] tiles;
+
 int tileCountX, tileCountY;
-ArrayList grabbedTiles;
 int tileSize = 50;
+
+Selection onscreenTiles = new EmptySelection();
 
 PImage backgroundImage;
 PGraphics canvas;
 
-SelectionBuilder allSelect;
-
 Selection cSelection = new EmptySelection();
 Mutator cMutator = new PositionMutator();
+
+TilePool tilePool;
+
 
 void setup(){
 	size(1080, 1080, P2D);
 	UI.initialise();
+	tilePool = new TilePool(10, 10);
 	canvas = createGraphics(width, height, P2D);
     backgroundImage = loadImage("monet.jpg");
-    grabbedTiles = new ArrayList<Tile>();
     drawBackgroundImage();
-    reTile();
-    float[] weight = {1.0};
-    allSelect = new SelectionBuilder(new Selection(tiles, weight, tileCountX, tileCountY));
+    reTile(200, 200);
 }
 
 void drawBackgroundImage(){
 	canvas.beginDraw();
 	canvas.image(backgroundImage, 0, 0);
 	canvas.endDraw();
+}
+
+void reTile(){
+	reTile(tileSize, tileSize);
+}
+
+void reTile(int sizeX, int sizeY){
+	PImage imageToTileFrom = canvas.get();
+	onscreenTiles = tilePool.produceTileGridOfSizeFromImage(sizeX, sizeY, imageToTileFrom);
+	SelectionBuilder.setSampleSelection(onscreenTiles);
 }
 
 
@@ -43,38 +53,15 @@ void draw(){
 
 	canvas.beginDraw();
 	canvas.background(0);
-	displayTiles(canvas);
+
+	for(int k = 0; k<onscreenTiles.contents.length;k++){
+		onscreenTiles.contents[k].display(canvas);
+	}
+
 	canvas.endDraw();
 	image(canvas, 0, 0);
 	UI.display();
 }
-
-void reTile(){
-	reTile(tileSize);
-}
-
-void reTile(int size){
-	println("Re-tiling...");
-	tileCountX = floor(width / size);
-	tileCountY = floor(height / size);
-	tiles = new Tile[tileCountX*tileCountY];
-	int x;
-	int y;
-	for(int k = 0; k<tileCountX; k++){
-		for(int j = 0; j<tileCountY; j++){
-			x = k * size;
-			y = j * size;
-			tiles[k+j*tileCountX] = new Tile(x, y, canvas.get(x, y, size, size));
-		}
-	}
-}
-
-void displayTiles(PGraphics pg){
-	for(int k = 0; k<tiles.length;k++){
-		tiles[k].display(pg);
-	}
-}
-
 
 
 void mousePressed(){
@@ -88,7 +75,7 @@ void mouseDragged(){
 
 void refreshRadialSelection(){
 	releaseSelection(cSelection);
-	cSelection = allSelect.selectRadial(mouseX, mouseY, 150);
+	cSelection = SelectionBuilder.selectRadial(mouseX, mouseY, 150);
 	grabSelection(cSelection);
 }
 

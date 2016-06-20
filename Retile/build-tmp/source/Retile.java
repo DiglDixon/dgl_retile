@@ -21,35 +21,45 @@ No need for controls, just go keys.
 */
 
 PApplet SKETCH = this;
-Tile[] tiles;
+
 int tileCountX, tileCountY;
-ArrayList grabbedTiles;
 int tileSize = 50;
+
+Selection onscreenTiles = new EmptySelection();
 
 PImage backgroundImage;
 PGraphics canvas;
 
-SelectionBuilder allSelect;
-
 Selection cSelection = new EmptySelection();
 Mutator cMutator = new PositionMutator();
+
+TilePool tilePool;
+
 
 public void setup(){
 	
 	UI.initialise();
+	tilePool = new TilePool(10, 10);
 	canvas = createGraphics(width, height, P2D);
     backgroundImage = loadImage("monet.jpg");
-    grabbedTiles = new ArrayList<Tile>();
     drawBackgroundImage();
-    reTile();
-    float[] weight = {1.0f};
-    allSelect = new SelectionBuilder(new Selection(tiles, weight, tileCountX, tileCountY));
+    reTile(200, 200);
 }
 
 public void drawBackgroundImage(){
 	canvas.beginDraw();
 	canvas.image(backgroundImage, 0, 0);
 	canvas.endDraw();
+}
+
+public void reTile(){
+	reTile(tileSize, tileSize);
+}
+
+public void reTile(int sizeX, int sizeY){
+	PImage imageToTileFrom = canvas.get();
+	onscreenTiles = tilePool.produceTileGridOfSizeFromImage(sizeX, sizeY, imageToTileFrom);
+	SelectionBuilder.setSampleSelection(onscreenTiles);
 }
 
 
@@ -59,38 +69,15 @@ public void draw(){
 
 	canvas.beginDraw();
 	canvas.background(0);
-	displayTiles(canvas);
+
+	for(int k = 0; k<onscreenTiles.contents.length;k++){
+		onscreenTiles.contents[k].display(canvas);
+	}
+
 	canvas.endDraw();
 	image(canvas, 0, 0);
 	UI.display();
 }
-
-public void reTile(){
-	reTile(tileSize);
-}
-
-public void reTile(int size){
-	println("Re-tiling...");
-	tileCountX = floor(width / size);
-	tileCountY = floor(height / size);
-	tiles = new Tile[tileCountX*tileCountY];
-	int x;
-	int y;
-	for(int k = 0; k<tileCountX; k++){
-		for(int j = 0; j<tileCountY; j++){
-			x = k * size;
-			y = j * size;
-			tiles[k+j*tileCountX] = new Tile(x, y, canvas.get(x, y, size, size));
-		}
-	}
-}
-
-public void displayTiles(PGraphics pg){
-	for(int k = 0; k<tiles.length;k++){
-		tiles[k].display(pg);
-	}
-}
-
 
 
 public void mousePressed(){
@@ -104,7 +91,7 @@ public void mouseDragged(){
 
 public void refreshRadialSelection(){
 	releaseSelection(cSelection);
-	cSelection = allSelect.selectRadial(mouseX, mouseY, 150);
+	cSelection = SelectionBuilder.selectRadial(mouseX, mouseY, 150);
 	grabSelection(cSelection);
 }
 
@@ -242,20 +229,30 @@ class Selection{
 	}
 }
 
+class WeightlessSelection extends Selection{
+	public WeightlessSelection(Tile[] contents, int w, int h){
+		super(contents, new float[contents.length], w, h);
+		for(int k = 0; k<weights.length; k++){
+			weights[k] = 1;
+		}
+	}
+
+}
+
 class EmptySelection extends Selection{
 	public EmptySelection(){
 		super(new Tile[0], new float[0], 0, 0);
 	}
 }
 
-
-
-class SelectionBuilder{
+// pseudo-static
+_SelectionBuilder SelectionBuilder = new _SelectionBuilder();
+class _SelectionBuilder{
 
 	Selection sampleSelection;
 
-	public SelectionBuilder(Selection defaultSampleSelection){
-		setSampleSelection(defaultSampleSelection);
+	public _SelectionBuilder(){
+		setSampleSelection(new EmptySelection());
 	}
 
 	public void setSampleSelection(Selection newSampleSelection){
@@ -264,11 +261,10 @@ class SelectionBuilder{
 
 	public Selection selectSingleTile(float x, float y){
 		Tile[] hitTile = new Tile[1];
-		float[] weight = {1.0f};
 		for(int k = 0; k<sampleSelection.contents.length;k++){
 			if(sampleSelection.contents[k].containsPoint(x, y)){
 				hitTile[0] = sampleSelection.contents[k];
-				return new Selection(hitTile, weight, sampleSelection.arrayWidth, sampleSelection.arrayHeight);
+				return new WeightlessSelection(hitTile, sampleSelection.arrayWidth, sampleSelection.arrayHeight);
 			}
 		}
 		return new EmptySelection();
@@ -284,10 +280,10 @@ class SelectionBuilder{
 		float distance;
 		for(int k = 0; k<sampleSelection.contents.length; k++){
 			tileCentrePosition = sampleSelection.contents[k].centrePosition();
-			distance = dist(x, y, tileCentrePosition.x, tileCentrePosition.y);
+			distance = dist(tileCentrePosition.x, tileCentrePosition.y, x, y);
 			if(distance < radius){
 				hitIndices[hitCount] = k;
-				weights[hitCount] = distance * inv_radius;
+				weights[hitCount] = (radius-distance) * inv_radius;
 				hitCount++;
 			}
 		}
@@ -305,13 +301,45 @@ class Tile{
 	private PVector position;
 	private PVector size;
 	private float rotation;
-	private PImage tileImage = createImage(1, 1, ARGB);
+	private PImage tileImage;
 	private boolean grabbed = false;
 
+	public Tile(){
+		position = new PVector();
+		size = new PVector();
+		tileImage = createImage(1, 1, ARGB);
+	}
+
+	// This is headed for deppn
 	public Tile(float x, float y, PImage img){
 		tileImage = img;
 		position = new PVector(x, y);
 		size = new PVector(img.width, img.height);
+	}
+
+	public void setParametersFromTileSetData(TileSetData data, int xIndex, int yIndex){
+		position.x = xIndex*data.tileWidth;
+		position.y = yIndex*data.tileHeight;
+		resizeTile(data.tileWidth, data.tileHeight);
+	}
+
+	private void resizeTile(int w, int h){
+		size.x = w;
+		size.y = h;
+		tileImage.resize(w, h);
+	}
+
+	// This requires pixels to already be loaded in baseImage - how can we make this clearer?
+	public void loadImageFromBaseImage(PImage baseImage){
+		tileImage.loadPixels();
+		int x = floor(position.x);
+		int y = floor(position.y);
+		for(int k = 0; k<tileImage.width; k++){
+			for(int j = 0; j<tileImage.height; j++){
+				tileImage.pixels[k + tileImage.width*j] = baseImage.pixels[(x+k)+(y+j)*baseImage.width];
+			}
+		}
+		tileImage.updatePixels();
 	}
 
 	public void move(PVector velocity){
@@ -348,6 +376,96 @@ class Tile{
 		pg.popMatrix();
 	}
 
+
+
+}
+
+class TileSetData{
+	public int tilesX;
+	public int tilesY;
+	public int tileWidth;
+	public int tileHeight;
+	public TileSetData(){
+	}
+}
+
+
+class TilePool{
+
+	private Tile[] tiles = new Tile[0];
+	private int maxWidth = width;
+	private int maxHeight = height;
+	private int minTileSizeX;
+	private int minTileSizeY;
+	private int maxTilesX = 1;
+	private int maxTilesY = 1;
+
+	public TilePool(int minSizeX, int minSizeY){
+		setMinTileDimensions(minSizeX, minSizeY);
+	}
+
+	private void setMinTileDimensions(int x, int y){
+		minTileSizeX = x;
+		minTileSizeY = y;
+		recalculateMaxScreenDimensions();
+	}
+
+	private void recalculateMaxScreenDimensions(){
+		maxTilesX = maxWidth / minTileSizeX;
+		maxTilesY = maxHeight / minTileSizeY;
+		if(maxTilesX*maxTilesY > tiles.length){
+			println("New resolution parameters require a larger TilePool array - renewing...");
+			renewTilesArray();
+		}
+	}
+
+	private void renewTilesArray(){
+		tiles = new Tile[maxTilesX*maxTilesY];
+		for(int k = 0; k<tiles.length; k++){
+			tiles[k] = new Tile();
+		}
+		println("Renewed tiles array with a length: "+tiles.length);
+	}
+
+	private void setMaxScreenDimensions(int x, int y){
+		maxWidth = x;
+		maxHeight = y;
+		recalculateMaxScreenDimensions();
+	}
+
+	public Selection produceTileGridOfSizeFromImage(int sizeX, int sizeY, PImage baseImage){
+		baseImage.loadPixels();
+
+		int tilesX = floor(maxWidth/sizeX);
+		int tilesY = floor(maxHeight/sizeY);
+
+		TileSetData newSetData = new TileSetData();
+		newSetData.tilesX = tilesX;
+		newSetData.tilesY = tilesY;
+		newSetData.tileWidth = sizeX;
+		newSetData.tileHeight = sizeY;
+
+		Tile[] activeTiles = new Tile[tilesX * tilesY];
+
+		Tile iTile;
+		for(int k = 0; k<tilesX; k++){
+			for(int j = 0; j<tilesY; j++){
+				iTile = tiles[k+j*tilesX];
+				iTile.setParametersFromTileSetData(newSetData, k, j);
+				iTile.loadImageFromBaseImage(baseImage);
+				activeTiles[k+j*tilesX] = iTile;
+			}
+		}
+
+		for(int k = tilesX; k<maxTilesX; k++){
+			for(int j = tilesY; j<maxTilesY; j++){
+				// deactivate
+			}
+		}
+
+		return new WeightlessSelection(activeTiles, tilesX, tilesY);
+
+	}
 
 
 }
