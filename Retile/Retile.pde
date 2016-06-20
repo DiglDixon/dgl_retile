@@ -5,8 +5,12 @@
 - static strings look great! Some great results with rotation
 - Navier Stokes could be insane, esp at low tile sizes. Will probs replace radial selection
 
+Using shader's, I believe it's entirely reasonable to be able to fill all spaces between tiles.
+
 - a shader would help our efficiency massively.
 	- images readfrom the same buffer, just with different texture coordinates
+
+- We can also draw strings from the shader too.
 
 */
 
@@ -39,7 +43,10 @@ void setup(){
 
 void drawBackgroundImage(){
 	canvas.beginDraw();
-	canvas.image(backgroundImage, 0, 0);
+	canvas.pushMatrix();
+	canvas.translate(width*0.5, height*0.5);
+	canvas.image(backgroundImage, -backgroundImage.width*0.5, -backgroundImage.height*0.5);
+	canvas.popMatrix();
 	canvas.endDraw();
 }
 
@@ -55,19 +62,28 @@ void reTile(int sizeX, int sizeY){
 
 
 void draw(){
-
 	cMutator.mutate(cSelection);
+	updateNavierStokes();
 
 	canvas.beginDraw();
-	// canvas.background(0);
+	canvas.fill(0, 10);
+	canvas.noStroke();
+	canvas.rect(0, 0, canvas.width, canvas.height);
 
-	for(int k = (frameCount%iterationSteps); k<onscreenTiles.contents.length; k+=iterationSteps){
-		onscreenTiles.contents[k].display(canvas);
-	}
+	displayTiles(canvas);
 
 	canvas.endDraw();
+
 	image(canvas, 0, 0);
 	UI.display();
+
+	displayNavierStokes();
+}
+
+void displayTiles(PGraphics pg){
+	for(int k=(frameCount%iterationSteps); k<onscreenTiles.contents.length; k+=iterationSteps){
+		onscreenTiles.contents[k].display(pg);
+	}
 }
 
 
@@ -146,5 +162,3 @@ void numberKeyPressed(int n){
 	}
 }
 
-
-//

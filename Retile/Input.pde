@@ -5,8 +5,7 @@ public class _Input{
 
 	public PVector mouseVelocity = new PVector();
 	public PVector mousePosition = new PVector();
-	public float mouseX;
-	public float mouseY;
+	public float mouseX, mouseY, pMouseX, pMouseY;
 
 	public boolean mouseDown = false;
 
@@ -19,6 +18,8 @@ public class _Input{
 		this.mouseVelocity.x = SKETCH.mouseX - this.mouseX;
 		this.mouseVelocity.y = SKETCH.mouseY - this.mouseY;
 
+		this.pMouseX = this.mouseX;
+		this.pMouseY = this.mouseY;
 		this.mouseX = SKETCH.mouseX;
 		this.mouseY = SKETCH.mouseY;
 		mousePosition.x = this.mouseX;

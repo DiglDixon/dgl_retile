@@ -1,8 +1,8 @@
 
 class Tile{
 
-	private PVector position;
-	private PVector size;
+	public PVector position; // this is only public for testing navier stokes
+	public PVector size;
 	private float rotation;
 	private PImage tileImage;
 	private boolean grabbed = false;
@@ -84,8 +84,8 @@ class Tile{
 
 	public void display(PGraphics pg){
 		pushTransformToGraphics(pg);
-		// displayTile(pg);
-		displayStrings(pg);
+		displayTile(pg);
+		displayStringsAtInterval(pg, 2);
 		if(grabbed){
 			displayGrabUI(pg);
 		}
@@ -103,12 +103,12 @@ class Tile{
 		pg.rect(-size.x*0.5, -size.y*0.5, size.x, size.y);
 	}
 
-	private void displayStrings(PGraphics pg){
-		for(int k = 0; k<edgeColoursTop.length; k++){
+	private void displayStringsAtInterval(PGraphics pg, int interval){
+		for(int k = 0; k<edgeColoursTop.length; k+=interval){
 			pg.stroke(edgeColoursTop[k]);
 			pg.line(-size.x*0.5+k, -size.y*0.5, -size.x*0.5+k, -size.y*0.5 - 10);
 		}
-		for(int j = 0; j<edgeColoursLeft.length; j++){
+		for(int j = 0; j<edgeColoursLeft.length; j+=interval){
 			pg.stroke(edgeColoursLeft[j]);
 			pg.line(-size.x*0.5, -size.y*0.5+j, -size.x*0.5 - 10, -size.y*0.5+j);
 		}
