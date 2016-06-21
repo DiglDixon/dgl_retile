@@ -2,6 +2,7 @@
 
 uniform mat4 transform;
 uniform mat4 texMatrix;
+uniform sampler2D texture;
 
 attribute vec4 vertex;
 attribute vec4 color;

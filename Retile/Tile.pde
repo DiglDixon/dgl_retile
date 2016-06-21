@@ -1,8 +1,9 @@
 
 class Tile{
 
-	public PVector position; // this is only public for testing navier stokes
-	public PVector size;
+	private PVector position;
+	private PVector size;
+	private PVector uvCoordinates;
 	private float rotation;
 	private PImage tileImage;
 	private boolean grabbed = false;
@@ -15,23 +16,21 @@ class Tile{
 		tileImage = createImage(1, 1, ARGB);
 	}
 
-	// This is headed for deppn
-	public Tile(float x, float y, PImage img){
-		tileImage = img;
-		position = new PVector(x, y);
-		size = new PVector(img.width, img.height);
-	}
-
 	public void setParametersFromTileSetData(TileSetData data, int xIndex, int yIndex){
 		position.x = xIndex*data.tileWidth;
 		position.y = yIndex*data.tileHeight;
 		resizeTile(data.tileWidth, data.tileHeight);
+		setUVsFromCurrentPosition();
 	}
 
 	private void resizeTile(int w, int h){
 		size.x = w;
 		size.y = h;
 		tileImage.resize(w, h);
+	}
+
+	private void setUVsFromCurrentPosition(){
+		uvCoordinates = new PVector(position.x, position.y);
 	}
 
 	// This requires pixels to already be loaded in baseImage - how can we make this clearer?
@@ -56,6 +55,10 @@ class Tile{
 			edgeColoursLeft[j] = baseImage.pixels[x + (y+j)*baseImage.width];
 		}
 
+	}
+
+	public PVector getPosition(){
+		return position;
 	}
 
 	public void move(PVector velocity){
@@ -84,14 +87,25 @@ class Tile{
 
 	public void display(PGraphics pg){
 		pushTransformToGraphics(pg);
-		displayTile(pg);
-		displayStringsAtInterval(pg, 2);
+		displayTileAsShape(pg);
+		// displayStringsAtInterval(pg, 2);
 		if(grabbed){
 			displayGrabUI(pg);
 		}
 		popTransformFromGraphics(pg);
 	}
 
+	private void displayTileAsShape(PGraphics pg){
+		pg.beginShape();
+		pg.texture(textureSource);
+		pg.vertex(-size.x*0.5, -size.y*0.5, uvCoordinates.x, uvCoordinates.y);
+		pg.vertex(size.x*0.5, -size.y*0.5, uvCoordinates.x+size.x, uvCoordinates.y);
+		pg.vertex(size.x*0.5, size.y*0.5, uvCoordinates.x+size.x, uvCoordinates.y+size.y);
+		pg.vertex(-size.x*0.5, size.y*0.5, uvCoordinates.x, uvCoordinates.y+size.y);
+		pg.endShape();
+	}
+
+	// Looking to dep this in favour of something more efficient
 	private void displayTile(PGraphics pg){
 		pg.image(tileImage, -size.x*0.5, -size.y*0.5);
 	}

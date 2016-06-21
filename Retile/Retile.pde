@@ -34,10 +34,12 @@ TilePool tilePool;
 
 PShader tileShader;
 
+PImage textureSource;
+
 
 void setup(){
 	size(1080, 1080, P2D);
-	tileShader = loadShader("shaders/tileshader_frag.glsl", "shaders/tileshader_vert.glsl");
+	// tileShader = loadShader("shaders/tileshader_frag.glsl", "shaders/tileshader_vert.glsl");
 	UI.initialise();
 	tilePool = new TilePool(10, 10);
 	canvas = createGraphics(width, height, P2D);
@@ -55,13 +57,18 @@ void drawBackgroundImage(){
 	canvas.endDraw();
 }
 
+void reloadTextureSource(){
+	textureSource = canvas.get();
+}
+
 void reTile(){
 	reTile(tileSize, tileSize);
 }
 
 void reTile(int sizeX, int sizeY){
-	PImage imageToTileFrom = canvas.get();
-	onscreenTiles = tilePool.produceTileGridOfSizeFromImage(sizeX, sizeY, imageToTileFrom);
+	// PImage imageToTileFrom = canvas.get();
+	reloadTextureSource();
+	onscreenTiles = tilePool.produceTileGridOfSizeFromImage(sizeX, sizeY, textureSource);
 	SelectionBuilder.setSampleSelection(onscreenTiles);
 }
 

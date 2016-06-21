@@ -31,18 +31,23 @@ void applyNavierStokesMovement(){
     float cellWidth = width / n;
 
     Tile t;
+    PVector pos;
+    // PVector size;
     for(int k = 0; k<onscreenTiles.contents.length; k++){
+
     	t = onscreenTiles.contents[k];
-    	int cellX = floor(t.position.x / cellWidth);
-        int cellY = floor(t.position.y / cellHeight);
+        pos = t.getPosition();
+
+    	int cellX = floor(pos.x / cellWidth);
+        int cellY = floor(pos.y / cellHeight);
         cellX = constrain(cellX, 0, width-1);
         cellY = constrain(cellY ,0, height-1);
         float dx = (float) fluidSolver.getDx(cellX, cellY);
         float dy = (float) fluidSolver.getDy(cellX, cellY);
 
         // Position relative to the centre of its cell
-        float lX = t.position.x - cellX * cellWidth - cellWidth / 2;
-        float lY = t.position.y - cellY * cellHeight - cellHeight / 2;
+        float lX = pos.x - cellX * cellWidth - cellWidth / 2;
+        float lY = pos.y - cellY * cellHeight - cellHeight / 2;
 
         int v, h, vf, hf;
 
