@@ -18,6 +18,9 @@ Using shader's, I believe it's entirely reasonable to be able to fill all spaces
 
 - Definitely need a pause function
 
+- Try differing width / height
+- Try randomising!
+
 */
 
 PApplet SKETCH = this;

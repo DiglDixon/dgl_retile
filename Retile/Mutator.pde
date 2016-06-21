@@ -12,7 +12,7 @@ public void displaySelectedWithWeights(Selection selection, PGraphics pg){
 	pg.noFill();
 	for(int k = 0; k<selection.contents.length; k++){
 		pg.strokeWeight(selection.weights[k]*4);
-		selection.contents[k].displayBoundingRect(pg);
+		selection.contents[k].displayCentredBoundingRect(pg);
 	}
 }
 
