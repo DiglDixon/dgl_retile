@@ -14,6 +14,10 @@ Using shader's, I believe it's entirely reasonable to be able to fill all spaces
 
 - Adding "drip" weight to tile-dense areas
 
+! Need to be conscious of being able to scale up images 
+
+- Definitely need a pause function
+
 */
 
 PApplet SKETCH = this;
@@ -29,6 +33,7 @@ PGraphics canvas;
 
 Selection cSelection = new EmptySelection();
 Mutator cMutator = new PositionMutator();
+NavierStokesMutator navierStokesMutator = new NavierStokesMutator();
 
 TilePool tilePool;
 
@@ -36,17 +41,53 @@ PShader tileShader;
 
 PImage textureSource;
 
+boolean displayGuides = true;
+
 
 void setup(){
 	size(1080, 1080, P2D);
-	// tileShader = loadShader("shaders/tileshader_frag.glsl", "shaders/tileshader_vert.glsl");
+	tileShader = loadShader("shaders/tileshader_frag.glsl", "shaders/tileshader_vert.glsl");
 	UI.initialise();
-	tilePool = new TilePool(10, 10);
+	tilePool = new TilePool(40, 40);
 	canvas = createGraphics(width, height, P2D);
     backgroundImage = loadImage("monet.jpg");
-    drawBackgroundImage();
-    reTile(200, 200);
+    resetCanvas();
 }
+
+void draw(){
+	cMutator.passiveUpdate();
+	cMutator.mutate(cSelection);
+
+	canvas.beginDraw();
+	// canvas.fill(0, 1);
+	// canvas.noStroke();
+	// canvas.rect(0, 0, canvas.width, canvas.height);
+
+	displayTiles(canvas);
+
+	canvas.endDraw();
+
+	image(canvas, 0, 0);
+
+	if(displayGuides){
+		UI.ui.beginDraw();
+		cMutator.display(cSelection, UI.ui);
+		UI.ui.endDraw();
+		image(UI.ui, 0, 0);
+	}
+
+	UI.display();
+
+}
+
+void resetCanvas(){
+	canvas.beginDraw();
+	canvas.background(150);
+	canvas.endDraw();
+    drawBackgroundImage();
+    reTile(50, 50);
+}
+
 
 void drawBackgroundImage(){
 	canvas.beginDraw();
@@ -59,6 +100,7 @@ void drawBackgroundImage(){
 
 void reloadTextureSource(){
 	textureSource = canvas.get();
+	// tileShader.set("texture", textureSource);
 }
 
 void reTile(){
@@ -73,29 +115,12 @@ void reTile(int sizeX, int sizeY){
 }
 
 
-void draw(){
-	cMutator.mutate(cSelection);
-	updateNavierStokes();
-
-	canvas.beginDraw();
-	canvas.fill(0, 1);
-	canvas.noStroke();
-	canvas.rect(0, 0, canvas.width, canvas.height);
-
-	displayTiles(canvas);
-
-	canvas.endDraw();
-
-	image(canvas, 0, 0);
-	UI.display();
-
-	displayNavierStokes();
-}
-
 void displayTiles(PGraphics pg){
+	canvas.shader(tileShader);
 	for(int k=(frameCount%iterationSteps); k<onscreenTiles.contents.length; k+=iterationSteps){
 		onscreenTiles.contents[k].display(pg);
 	}
+	canvas.resetShader();
 }
 
 
@@ -109,29 +134,14 @@ void mouseDragged(){
 }
 
 void refreshRadialSelection(){
-	releaseSelection(cSelection);
 	cSelection = SelectionBuilder.selectRadial(mouseX, mouseY, 150);
-	grabSelection(cSelection);
 }
 
 void mouseReleased(){
 	Input.mouseReleased();
-	releaseSelection(cSelection);
 	cSelection = new EmptySelection();
 }
 
-
-void grabSelection(Selection selection){
-	for(int k = 0; k<selection.contents.length; k++){
-		selection.contents[k].grab();
-	}
-}
-
-void releaseSelection(Selection selection){
-	for(int k = 0; k<selection.contents.length; k++){
-		selection.contents[k].release();
-	}
-}
 
 
 void keyPressed() {
@@ -148,14 +158,24 @@ void keyPressed() {
         case '9':
         numberKeyPressed(Integer.parseInt(key+""));
         break;
+        case BACKSPACE:
+	        resetCanvas();
+	        break;
     	case ' ':
-    	reTile();
-    	break;
+	    	reTile();
+	    	break;
+    	case '`':
+	    	displayGuides = !displayGuides;
+	    	break;
     	case 'r':
     		cMutator = new RotationMutator();
-    	break;
+	    	break;
     	case 'v':
     		cMutator = new PositionMutator();
+    		break;
+    	case 'n':
+    		cMutator = navierStokesMutator;
+    		break;
         default:
         //unknown key
         break;

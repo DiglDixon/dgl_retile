@@ -4,6 +4,7 @@ precision mediump int;
 #endif
 
 uniform sampler2D texture;
+// uniform sampler2D tileTexture;
 
 varying vec4 vertColor;
 varying vec4 vertTexCoord;

@@ -6,7 +6,6 @@ class Tile{
 	private PVector uvCoordinates;
 	private float rotation;
 	private PImage tileImage;
-	private boolean grabbed = false;
 	private color[] edgeColoursTop;
 	private color[] edgeColoursLeft;
 
@@ -16,10 +15,11 @@ class Tile{
 		tileImage = createImage(1, 1, ARGB);
 	}
 
-	public void setParametersFromTileSetData(TileSetData data, int xIndex, int yIndex){
+	public void resetFromTileSetData(TileSetData data, int xIndex, int yIndex){
 		position.x = xIndex*data.tileWidth;
 		position.y = yIndex*data.tileHeight;
 		resizeTile(data.tileWidth, data.tileHeight);
+		rotation = 0;
 		setUVsFromCurrentPosition();
 	}
 
@@ -69,14 +69,6 @@ class Tile{
 		rotation+=rotationAdd;
 	}
 
-	public void grab(){
-		grabbed = true;
-	}
-
-	public void release(){
-		grabbed = false;
-	}
-
 	public PVector centrePosition(){
 		return PVector.add(position, PVector.mult(size, 0.5));
 	}
@@ -84,37 +76,68 @@ class Tile{
 	public boolean containsPoint(float x, float y){
 		return (x > position.x && y > position.y && x<position.x+size.x && y<position.y+size.y);
 	}
+	
+	public void displayBoundingRect(PGraphics pg){
+		pg.rect(-size.x*0.5, -size.y*0.5, size.x, size.y);
+	}
 
 	public void display(PGraphics pg){
 		pushTransformToGraphics(pg);
 		displayTileAsShape(pg);
+		displayStringsAsShapes(pg, 2, 2, 5);
 		// displayStringsAtInterval(pg, 2);
-		if(grabbed){
-			displayGrabUI(pg);
-		}
 		popTransformFromGraphics(pg);
 	}
 
 	private void displayTileAsShape(PGraphics pg){
+		pg.noStroke();
+		pg.noFill();
 		pg.beginShape();
 		pg.texture(textureSource);
-		pg.vertex(-size.x*0.5, -size.y*0.5, uvCoordinates.x, uvCoordinates.y);
-		pg.vertex(size.x*0.5, -size.y*0.5, uvCoordinates.x+size.x, uvCoordinates.y);
-		pg.vertex(size.x*0.5, size.y*0.5, uvCoordinates.x+size.x, uvCoordinates.y+size.y);
-		pg.vertex(-size.x*0.5, size.y*0.5, uvCoordinates.x, uvCoordinates.y+size.y);
+		addTopLeftVertex(pg);
+		addTopRightVertex(pg);
+		addBottomLeftVertex(pg);
+		addBottomRightVertex(pg);
 		pg.endShape();
+	}
+
+	private void addTopLeftVertex(PGraphics pg){
+		pg.vertex(-size.x*0.5, -size.y*0.5, uvCoordinates.x, uvCoordinates.y);
+	}
+	private void addTopRightVertex(PGraphics pg){
+		pg.vertex(size.x*0.5, -size.y*0.5, uvCoordinates.x+size.x, uvCoordinates.y);
+	}
+	private void addBottomLeftVertex(PGraphics pg){
+		pg.vertex(size.x*0.5, size.y*0.5, uvCoordinates.x+size.x, uvCoordinates.y+size.y);
+	}
+	private void addBottomRightVertex(PGraphics pg){
+		pg.vertex(-size.x*0.5, size.y*0.5, uvCoordinates.x, uvCoordinates.y+size.y);
+	}
+
+	private void displayStringsAsShapes(PGraphics pg, int thickness, int interval, int length){
+
+		// top row
+		int count = 0;
+		int step = interval + thickness;
+		for(int k = 0; k<(size.x-step); k+=step){
+			pg.beginShape();
+			pg.texture(textureSource);
+			pg.vertex(-size.x*0.5 + step*count, -size.y*0.5, uvCoordinates.x + step*count, uvCoordinates.y); // edge left
+
+			pg.vertex(-size.x*0.5 + step*count, -size.y*0.5 - length, uvCoordinates.x + step*count, uvCoordinates.y); // extrude left
+			pg.vertex(-size.x*0.5 + step*count + thickness, -size.y*0.5 - length, uvCoordinates.x + step*count + thickness, uvCoordinates.y); // extrude right
+
+			pg.vertex(-size.x*0.5 + step*count + thickness, -size.y*0.5, uvCoordinates.x + step*count + thickness, uvCoordinates.y); // edge right
+			pg.endShape();
+
+			count++;
+		}
+
 	}
 
 	// Looking to dep this in favour of something more efficient
 	private void displayTile(PGraphics pg){
 		pg.image(tileImage, -size.x*0.5, -size.y*0.5);
-	}
-
-	private void displayGrabUI(PGraphics pg){
-		pg.noFill();
-		pg.stroke(255, 50);
-		pg.strokeWeight(1);
-		pg.rect(-size.x*0.5, -size.y*0.5, size.x, size.y);
 	}
 
 	private void displayStringsAtInterval(PGraphics pg, int interval){
@@ -137,7 +160,5 @@ class Tile{
 	private void popTransformFromGraphics(PGraphics pg){
 		pg.popMatrix();
 	}
-
-
 
 }

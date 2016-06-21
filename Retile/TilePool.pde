@@ -53,10 +53,15 @@ class TilePool{
 	}
 
 	public Selection produceTileGridOfSizeFromImage(int sizeX, int sizeY, PImage baseImage){
-		baseImage.loadPixels();
+		// baseImage.loadPixels();
+
+		if(sizeX < minTileSizeX || sizeY > minTileSizeY){
+			setMinTileDimensions(sizeX, sizeY);
+		}
 
 		int tilesX = floor(maxWidth/sizeX);
 		int tilesY = floor(maxHeight/sizeY);
+
 
 		TileSetData newSetData = new TileSetData();
 		newSetData.tilesX = tilesX;
@@ -70,8 +75,8 @@ class TilePool{
 		for(int k = 0; k<tilesX; k++){
 			for(int j = 0; j<tilesY; j++){
 				iTile = tiles[k+j*tilesX];
-				iTile.setParametersFromTileSetData(newSetData, k, j);
-				iTile.loadImageFromBaseImage(baseImage);
+				iTile.resetFromTileSetData(newSetData, k, j);
+				// iTile.loadImageFromBaseImage(baseImage);
 				activeTiles[k+j*tilesX] = iTile;
 			}
 		}
