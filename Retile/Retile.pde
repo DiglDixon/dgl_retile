@@ -12,6 +12,8 @@ Using shader's, I believe it's entirely reasonable to be able to fill all spaces
 
 - We can also draw strings from the shader too.
 
+- Adding "drip" weight to tile-dense areas
+
 */
 
 PApplet SKETCH = this;
@@ -30,9 +32,12 @@ Mutator cMutator = new PositionMutator();
 
 TilePool tilePool;
 
+PShader tileShader;
+
 
 void setup(){
 	size(1080, 1080, P2D);
+	tileShader = loadShader("shaders/tileshader_frag.glsl", "shaders/tileshader_vert.glsl");
 	UI.initialise();
 	tilePool = new TilePool(10, 10);
 	canvas = createGraphics(width, height, P2D);
@@ -66,7 +71,7 @@ void draw(){
 	updateNavierStokes();
 
 	canvas.beginDraw();
-	canvas.fill(0, 10);
+	canvas.fill(0, 1);
 	canvas.noStroke();
 	canvas.rect(0, 0, canvas.width, canvas.height);
 
