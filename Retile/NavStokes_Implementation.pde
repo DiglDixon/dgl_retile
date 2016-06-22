@@ -34,6 +34,7 @@ class NavierStokesMutator implements Mutator{
 
         Tile t;
         PVector pos;
+        PVector velocity;
         for(int k = 0; k<onscreenTiles.contents.length; k++){
 
             t = onscreenTiles.contents[k];
@@ -80,14 +81,16 @@ class NavierStokesMutator implements Mutator{
 
             dy = lerp(lerp(dy, dyv, hf * lY / cellWidth), lerp(dyh, dyvh, hf * lY / cellWidth), vf * lX / cellHeight);
 
-            t.move(new PVector(dx * vScale, dy * vScale));
+            velocity = new PVector(dx * vScale, dy * vScale);
+            t.rotateTowardsHeading(velocity, velocity.mag()/100 );
+            t.move(velocity);
         }
     }
 
     public void display(Selection selection, PGraphics pg){
         pg.stroke(64, 50);
         paintGrid(pg);
-        pg.stroke(255, 30);
+        pg.stroke(255, 50);
         pg.strokeWeight(2);
         paintMotionVector(pg);
     }

@@ -2,17 +2,26 @@
 class Tile{
 
 	private TileTransform transform;
+	private float naturalHeading = 0;
+	private boolean naturalHeadingAssigned = false;
 
 	public Tile(){
 		transform = new TileTransform();
 	}
 
+
 	public void resetFromTileSetData(TileSetData data, int xIndex, int yIndex){
 		transform.position.x = xIndex*data.tileWidth;
 		transform.position.y = yIndex*data.tileHeight;
 		resizeTile(data.tileWidth, data.tileHeight);
-		transform.rotation = 0;
 		setUVsFromCurrentPosition();
+		reset();
+	}
+
+	private void reset(){
+		transform.rotation = 0;
+		naturalHeading = 0;
+		naturalHeadingAssigned = false;
 	}
 
 	private void resizeTile(int w, int h){
@@ -25,8 +34,19 @@ class Tile{
 		transform.uv.y = transform.position.y;
 	}
 
+// REFACTOR Don't give up!
+	// public TileTransform getTransform(){
+	// 	return transform;
+	// }
+
+	// This is needed for nav-stokes, I don't know how else to do it!
 	public PVector getPosition(){
 		return transform.position;
+	}
+
+	public void rotateTowardsHeading(PVector velocity, float weight){
+		weight = constrain(weight, 0, 1);
+		transform.rotation = transform.rotation + (velocity.heading() - transform.rotation)*weight;
 	}
 
 	public void move(PVector velocity){
@@ -34,11 +54,11 @@ class Tile{
 	}
 
 	public void rotate(float rotation){
-		transform.rotation += rotation;
+		transform.rotation = (transform.rotation+rotation)%TWO_PI;
 	}
 
-	public PVector centrePosition(){
-		return PVector.add(transform.position, PVector.mult(transform.size, 0.5));
+	public float distanceFromPoint(float x, float y){
+		return dist(transform.position.x, transform.position.y, x, y);
 	}
 
 	public boolean containsPoint(float x, float y){
@@ -51,7 +71,7 @@ class Tile{
 
 	public void display(PGraphics pg){
 		pushTransformToGraphics(pg);
-		displayTileAsShape(pg);
+		// displayTileAsShape(pg);
 		displayStringsAsShapes(pg, 2, 2, 5);
 		popTransformFromGraphics(pg);
 	}
@@ -73,6 +93,7 @@ class Tile{
 		// top row
 		int count = 0;
 		int step = interval + thickness;
+		pg.noStroke();
 		for(int k = 0; k<(transform.size.x-step); k+=step){
 			pg.beginShape();
 			pg.texture(textureSource);

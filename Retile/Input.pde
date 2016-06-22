@@ -9,6 +9,9 @@ public class _Input{
 
 	public boolean mouseDown = false;
 
+	private int shiftDownCount = 0;
+	public boolean reverseDown = false;
+
 	public _Input(){
 		registerMethod("draw", this);
 	}
@@ -27,11 +30,34 @@ public class _Input{
 	}
 
 	public void keyPressed(char key){
+		switch(key){
+			case CODED:
+			switch(keyCode){
+				case SHIFT:
+				println("Shift down");
+				shiftDownCount++;
+				reverseDown = true;
+				break;
+			}
+			break;
+		}
 
 	}
 	public void keyReleased(char key){
-
+		switch(key){
+			case CODED:
+			switch(keyCode){
+				case SHIFT:
+				shiftDownCount--;
+				if(shiftDownCount==0){
+					reverseDown = false;	
+				}
+				break;
+			}
+			break;
+		}
 	}
+
 	public void mousePressed(){
 		mouseDown = true;
 	}

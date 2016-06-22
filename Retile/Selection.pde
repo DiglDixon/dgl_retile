@@ -64,8 +64,7 @@ class _SelectionBuilder{
 		PVector tileCentrePosition;
 		float distance;
 		for(int k = 0; k<sampleSelection.contents.length; k++){
-			tileCentrePosition = sampleSelection.contents[k].centrePosition();
-			distance = dist(tileCentrePosition.x, tileCentrePosition.y, x, y);
+			distance = sampleSelection.contents[k].distanceFromPoint(x, y);
 			if(distance < radius){
 				hitIndices[hitCount] = k;
 				weights[hitCount] = (radius-distance) * inv_radius;

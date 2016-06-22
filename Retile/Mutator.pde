@@ -60,7 +60,8 @@ class RotationMutator implements Mutator{
 	public void mutate(Selection selection){
 		for(int k = 0; k<selection.contents.length; k++){
 			// selection.contents[k].move(PVector.mult(Input.mouseVelocity, selection.weights[k]));
-			selection.contents[k].rotate(0.07*Time.deltaTime()*selection.weights[k]);
+			float rate = Input.reverseDown? -0.07 : 0.07;
+			selection.contents[k].rotate(rate*Time.deltaTime()*selection.weights[k]);
 		}
 	}
 
