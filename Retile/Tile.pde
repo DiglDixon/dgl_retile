@@ -5,6 +5,8 @@ class Tile{
 	private float naturalHeading = 0;
 	private boolean naturalHeadingAssigned = false;
 
+	PVector pPosition = new PVector();
+
 	public Tile(){
 		transform = new TileTransform();
 	}
@@ -22,6 +24,8 @@ class Tile{
 		transform.rotation = 0;
 		naturalHeading = 0;
 		naturalHeadingAssigned = false;
+		pPosition.x = transform.position.x;
+		pPosition.y = transform.position.y;
 	}
 
 	private void resizeTile(int w, int h){
@@ -50,6 +54,8 @@ class Tile{
 	}
 
 	public void move(PVector velocity){
+		pPosition.x = transform.position.x;
+		pPosition.y = transform.position.y;
 		transform.position.add(velocity);
 	}
 
@@ -72,7 +78,7 @@ class Tile{
 	public void display(PGraphics pg){
 		pushTransformToGraphics(pg);
 		// displayTileAsShape(pg);
-		displayStringsAsShapes(pg, 2, 2, 5);
+		displayStringsAsShapes(pg, 3, 1, 5);
 		popTransformFromGraphics(pg);
 	}
 //REFACTOR

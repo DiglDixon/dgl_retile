@@ -25,49 +25,61 @@
 
 PApplet SKETCH = this;
 
-int tileCountX, tileCountY;
 int tileSize = 50;
-int iterationSteps = 1;
+color backgroundColour = color(255);
 
 Selection onscreenTiles = new EmptySelection();
 
 PImage backgroundImage;
 PGraphics canvas;
 
+PGraphics exportCanvas;
+
 Selection cSelection = new EmptySelection();
-Mutator cMutator = new PositionMutator();
 NavierStokesMutator navierStokesMutator = new NavierStokesMutator();
+Mutator cMutator = navierStokesMutator;
 
 TilePool tilePool;
 
 
 PImage textureSource;
 
-boolean displayGuides = true;
+boolean displayGuides = false;
+
+int composingWidth = 775;
+int composingHeight = 1100;
 
 
 void setup(){
-	size(1080, 1080, P3D);
-	// noSmooth();
-	intialiseProcessIteration(1);
+	size(775, 1100, OPENGL);
+	// noSmooth(); // This is required when we want to compile multiple canvases.
+	// intialiseProcessIteration(1);
 	UI.initialise();
-	tilePool = new TilePool(40, 40);
-	canvas = createGraphics(width, height, P2D);
-    backgroundImage = loadImage("monet.jpg");
+	tilePool = new TilePool(tileSize, tileSize);
+	canvas = createGraphics(width, height, OPENGL);
+	exportCanvas = createGraphics(width*5, height*5, OPENGL);
+    backgroundImage = loadImage("images/monet.jpg");
     resetCanvas();
+    resetExportCanvasBackground();
 }
 
 void draw(){
 	cMutator.passiveUpdate();
 	cMutator.mutate(cSelection);
 	canvas.beginDraw();
-
 	displayTiles(canvas);
 	// displayTilesInIterationsToGraphics(onscreenTiles.contents, canvas);
-
 	canvas.endDraw();
+	exportCanvas.beginDraw();
+	exportCanvas.pushMatrix();
+	exportCanvas.scale(exportCanvas.width / canvas.width);
+	displayTiles(exportCanvas);
+	exportCanvas.popMatrix();
+	exportCanvas.endDraw();
 
 	image(canvas, 0, 0);
+
+	// image(exportCanvas, 500, 0);
 
 	if(displayGuides){
 		UI.ui.beginDraw();
@@ -82,20 +94,32 @@ void draw(){
 
 void resetCanvas(){
 	canvas.beginDraw();
-	canvas.background(150);
+	canvas.background(backgroundColour);
 	canvas.endDraw();
     drawBackgroundImage();
-    reTile(50, 50);
+    reTile();
 	canvas.beginDraw();
-	canvas.background(150);
+	canvas.background(backgroundColour);
 	canvas.endDraw();
 }
 
+void resetExportCanvasBackground(){
+	exportCanvas.beginDraw();
+	exportCanvas.background(backgroundColour);
+	exportCanvas.endDraw();
+}
+
+void exportImage(){
+	print("Exporting image... ");
+	String outputName = nf(month(), 2)+"-"+nf(day(), 2)+"-"+nf(minute(), 2)+" "+millis()+".tiff";
+	exportCanvas.save("./outputs/"+outputName);
+	println("Done! "+outputName);
+}
 
 void drawBackgroundImage(){
 	canvas.beginDraw();
 	canvas.pushMatrix();
-	canvas.translate(width*0.5, height*0.5);
+	canvas.translate(composingWidth*0.5, composingHeight*0.5);
 	canvas.image(backgroundImage, -backgroundImage.width*0.5, -backgroundImage.height*0.5);
 	canvas.popMatrix();
 	canvas.endDraw();
@@ -118,7 +142,7 @@ void reloadTextureSource(){
 
 
 void displayTiles(PGraphics pg){
-	for(int k=(frameCount%iterationSteps); k<onscreenTiles.contents.length; k+=iterationSteps){
+	for(int k = 0; k<onscreenTiles.contents.length; k++){
 		onscreenTiles.contents[k].display(pg);
 	}
 	canvas.resetShader();

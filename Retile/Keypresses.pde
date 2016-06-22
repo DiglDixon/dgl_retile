@@ -43,6 +43,9 @@ void keyPressed() {
         case '9':
         numberKeyPressed(Integer.parseInt(key+""));
         break;
+        case ENTER:
+            exportImage();
+        break;
         case BACKSPACE:
 	        resetCanvas();
 	        break;
@@ -81,11 +84,6 @@ void numberKeyPressed(int n){
 
 	if(n>0){
 		tileSize = n*10;
-		if(tileSize <= 20){
-			iterationSteps = 1;
-		}else{
-			iterationSteps = 1;
-		}
 		println("Changed tile size: "+tileSize);
 	}
 }

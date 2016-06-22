@@ -5,7 +5,7 @@ PGraphics[] iterationCanvases;
 void intialiseProcessIteration(int maxProcesses){
 	iterationCanvases = new PGraphics[maxProcesses];
 	for(int k = 0; k<iterationCanvases.length; k++){
-		iterationCanvases[k] = createGraphics(width, height, P3D);
+		iterationCanvases[k] = createGraphics(width, height, P2D);
 		iterationCanvases[k].beginDraw();
 		iterationCanvases[k].background(255);
 		iterationCanvases[k].clear();

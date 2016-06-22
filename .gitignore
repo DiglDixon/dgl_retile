@@ -1,3 +1,6 @@
 /Retile/build-tmp/*
 /Retile/data/images
 /Retile/data/outputs
+*.jpg
+*.tiff
+*.tif

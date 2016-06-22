@@ -119,14 +119,20 @@ class NavierStokesMutator implements Mutator{
         float cellWidth = width / n;
         for (int i = 0; i < n; i++) {
             for (int j = 0; j < n; j++) {
-                float dx = (float) fluidSolver.getDx(i, j);
-                float dy = (float) fluidSolver.getDy(i, j);
                 float x = cellWidth / 2 + cellWidth * i;
                 float y = cellHeight / 2 + cellHeight * j;
-                dx *= scale;
-                dy *= scale;
+                if(fluidSolver.isDeadCell(i, j)){
+                    pg.fill(255, 100, 100, 100);
+                    pg.noStroke();
+                    pg.rect(x-cellWidth*0.5, y-cellHeight*0.5, cellWidth, cellHeight);
+                }else{
+                    float dx = (float) fluidSolver.getDx(i, j);
+                    float dy = (float) fluidSolver.getDy(i, j);
+                    dx *= scale;
+                    dy *= scale;
 
-                pg.line(x, y, x + dx, y + dy);
+                    pg.line(x, y, x + dx, y + dy);
+                }
             }
         }
     }
