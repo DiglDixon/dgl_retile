@@ -38,11 +38,6 @@ class Tile{
 		transform.uv.y = transform.position.y;
 	}
 
-// REFACTOR Don't give up!
-	// public TileTransform getTransform(){
-	// 	return transform;
-	// }
-
 	// This is needed for nav-stokes, I don't know how else to do it!
 	public PVector getPosition(){
 		return transform.position;
@@ -77,9 +72,10 @@ class Tile{
 
 	public void display(PGraphics pg){
 		pushTransformToGraphics(pg);
-		// displayTileAsShape(pg);
+		displayTileAsShape(pg);
 		displayStringsAsShapes(pg, 3, 1, 5);
 		popTransformFromGraphics(pg);
+		displayCorners(pg);
 	}
 //REFACTOR
 	private void displayTileAsShape(PGraphics pg){
@@ -92,6 +88,32 @@ class Tile{
 		pg.vertex(transform.size.x*0.5, transform.size.y*0.5, transform.uv.x+transform.size.x, transform.uv.y+transform.size.y);
 		pg.vertex(-transform.size.x*0.5, transform.size.y*0.5, transform.uv.x, transform.uv.y+transform.size.y);
 		pg.endShape();
+	}
+
+	private void displayCorners(PGraphics pg){
+
+		float r = transform.size.x * ROOT_TWO * 0.5; // This is the hypot, as long as our tiles are square.
+		PVector centre = PVector.add(transform.position, PVector.mult(transform.size, 0.5));
+
+		float bottomRightCornerX = centre.x+cos(transform.rotation + PI*0.25)*r;
+		float bottomRightCornerY = centre.y+sin(transform.rotation + PI*0.25)*r;
+
+		float topRightCornerX = centre.x+cos(transform.rotation + PI*-0.25)*r;
+		float topRightCornerY = centre.y+sin(transform.rotation + PI*-0.25)*r;
+
+		float bottomLeftCornerX = centre.x+cos(transform.rotation + PI*0.75)*r;
+		float bottomLeftCornerY = centre.y+sin(transform.rotation + PI*0.75)*r;
+
+		float topLeftCornerX = centre.x+cos(transform.rotation + PI*-0.75)*r;
+		float topLeftCornerY = centre.y+sin(transform.rotation + PI*-0.75)*r;
+
+		pg.noStroke();
+		pg.fill(150, 20, 20);
+		pg.text("TR", topRightCornerX, topRightCornerY);
+		pg.text("BR", bottomRightCornerX, bottomRightCornerY);
+		pg.text("TL", topLeftCornerX, topLeftCornerY);
+		pg.text("BL", bottomLeftCornerX, bottomLeftCornerY);
+
 	}
 //REFACTOR
 	private void displayStringsAsShapes(PGraphics pg, int thickness, int interval, int length){

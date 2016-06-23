@@ -25,6 +25,8 @@
 
 PApplet SKETCH = this;
 
+float ROOT_TWO = 1.41421356;
+
 int tileSize = 50;
 color backgroundColour = color(255);
 
@@ -58,7 +60,7 @@ void setup(){
 	tilePool = new TilePool(tileSize, tileSize);
 	canvas = createGraphics(width, height, OPENGL);
 	exportCanvas = createGraphics(width*5, height*5, OPENGL);
-    backgroundImage = loadImage("images/monet.jpg");
+    backgroundImage = loadImage("images/mona.jpg");
     resetCanvas();
     resetExportCanvasBackground();
 }
@@ -111,7 +113,7 @@ void resetExportCanvasBackground(){
 
 void exportImage(){
 	print("Exporting image... ");
-	String outputName = nf(month(), 2)+"-"+nf(day(), 2)+"-"+nf(minute(), 2)+" "+millis()+".tiff";
+	String outputName = nf(month(), 2)+"-"+nf(day(), 2)+"-"+nf(hour(), 2)+"-"+nf(minute(), 2)+" "+millis()+".tiff";
 	exportCanvas.save("./outputs/"+outputName);
 	println("Done! "+outputName);
 }
