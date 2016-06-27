@@ -90,8 +90,6 @@ class NavierStokesMutator implements Mutator{
     public void display(Selection selection, PGraphics pg){
         pg.stroke(64, 50);
         paintGrid(pg);
-        pg.stroke(255, 50);
-        pg.strokeWeight(2);
         paintMotionVector(pg);
     }
 
@@ -122,10 +120,12 @@ class NavierStokesMutator implements Mutator{
                 float x = cellWidth / 2 + cellWidth * i;
                 float y = cellHeight / 2 + cellHeight * j;
                 if(fluidSolver.isDeadCell(i, j)){
-                    pg.fill(255, 100, 100, 100);
+                    pg.fill(150, 100, 100, 100);
                     pg.noStroke();
                     pg.rect(x-cellWidth*0.5, y-cellHeight*0.5, cellWidth, cellHeight);
                 }else{
+                    pg.stroke(150);
+                    pg.noFill();
                     float dx = (float) fluidSolver.getDx(i, j);
                     float dy = (float) fluidSolver.getDy(i, j);
                     dx *= scale;

@@ -19,7 +19,6 @@
 
 - stroke the strings!!
 
-- multiple canvases for drawing at intervals
 
 */
 
@@ -28,6 +27,8 @@ PApplet SKETCH = this;
 float ROOT_TWO = 1.41421356;
 
 int tileSize = 50;
+int gridSizeX;
+int gridSizeY;
 color backgroundColour = color(255);
 
 Selection onscreenTiles = new EmptySelection();
@@ -48,12 +49,12 @@ PImage textureSource;
 
 boolean displayGuides = false;
 
-int composingWidth = 775;
-int composingHeight = 1100;
+int composingWidth = 636;
+int composingHeight = 900;
 
 
 void setup(){
-	size(775, 1100, OPENGL);
+	size(636, 900, OPENGL);
 	// noSmooth(); // This is required when we want to compile multiple canvases.
 	// intialiseProcessIteration(1);
 	UI.initialise();
@@ -69,13 +70,12 @@ void draw(){
 	cMutator.passiveUpdate();
 	cMutator.mutate(cSelection);
 	canvas.beginDraw();
-	displayTiles(canvas);
-	// displayTilesInIterationsToGraphics(onscreenTiles.contents, canvas);
+	drawComposition(canvas);
 	canvas.endDraw();
 	exportCanvas.beginDraw();
 	exportCanvas.pushMatrix();
 	exportCanvas.scale(exportCanvas.width / canvas.width);
-	displayTiles(exportCanvas);
+	drawComposition(exportCanvas);
 	exportCanvas.popMatrix();
 	exportCanvas.endDraw();
 
@@ -103,6 +103,7 @@ void resetCanvas(){
 	canvas.beginDraw();
 	canvas.background(backgroundColour);
 	canvas.endDraw();
+	resetExportCanvasBackground();
 }
 
 void resetExportCanvasBackground(){
@@ -122,6 +123,7 @@ void drawBackgroundImage(){
 	canvas.beginDraw();
 	canvas.pushMatrix();
 	canvas.translate(composingWidth*0.5, composingHeight*0.5);
+	canvas.scale(0.8);
 	canvas.image(backgroundImage, -backgroundImage.width*0.5, -backgroundImage.height*0.5);
 	canvas.popMatrix();
 	canvas.endDraw();
@@ -135,6 +137,7 @@ void reTile(int sizeX, int sizeY){
 	// PImage imageToTileFrom = canvas.get();
 	reloadTextureSource();
 	onscreenTiles = tilePool.produceTileGridOfSizeFromImage(sizeX, sizeY, textureSource);
+
 	SelectionBuilder.setSampleSelection(onscreenTiles);
 }
 
@@ -142,14 +145,66 @@ void reloadTextureSource(){
 	textureSource = canvas.get();
 }
 
-
-void displayTiles(PGraphics pg){
-	for(int k = 0; k<onscreenTiles.contents.length; k++){
-		onscreenTiles.contents[k].display(pg);
-	}
-	canvas.resetShader();
+void drawComposition(PGraphics pg){
+	// pg.background(255);
+	float thickness = 0.1;
+	float interval = 0.05;
+	// displayStringsUp(pg, thickness, interval);
+	displayStringsAcross(pg, thickness, interval);
+	// displayTiles(pg);
+	// displayTilesInIterationsToGraphics(onscreenTiles.contents, pg);
 }
 
+void displayTiles(PGraphics pg){
+	Tile t;
+	for(int k = 0; k<onscreenTiles.contents.length; k++){
+		t = onscreenTiles.contents[k];
+		t.displayTileAsShape(pg);
+	}
+}
+void displayStringsUp(PGraphics pg, float thickness, float interval){
+	Tile t;
+	Tile pTile;
+	for(int k = 1; k<onscreenTiles.arrayWidth; k++){
+		for(int j = 0; j<onscreenTiles.arrayHeight; j++){
+			pTile = onscreenTiles.contents[(k-1)+j*onscreenTiles.arrayWidth];
+			t = onscreenTiles.contents[k+j*onscreenTiles.arrayWidth];	
+			drawStringsBetweenEdges(pg, pTile.transform.vertexSet.rightEdge, t.transform.vertexSet.leftEdge, thickness, interval);
+		}
+	}
+}
+
+void displayStringsAcross(PGraphics pg, float thickness, float interval){
+	Tile t;
+	Tile pTile;
+	for(int k = 0; k<onscreenTiles.arrayWidth; k++){
+		for(int j = 1; j<onscreenTiles.arrayHeight; j++){
+			pTile = onscreenTiles.contents[k+(j-1)*onscreenTiles.arrayWidth];
+			t = onscreenTiles.contents[k+j*onscreenTiles.arrayWidth];	
+			drawStringsBetweenEdges(pg, pTile.transform.vertexSet.bottomEdge, t.transform.vertexSet.topEdge, thickness, interval);
+		}
+	}
+}
+
+void drawStringsBetweenEdges(PGraphics pg, TileTransformEdge edgeFrom, TileTransformEdge edgeTo, float thickness, float interval){
+	float step = thickness+interval;
+	TileVertex tv;
+	// pg.stroke(0);
+	pg.noStroke();
+	for(float k = interval; k<(1-step); k+=step){
+		pg.beginShape();
+		pg.texture(textureSource);
+		tv = TileTransformTools.getVertexValuesAlongEdge(edgeFrom, k);
+		pg.vertex(tv.position.x, tv.position.y, tv.uv.x, tv.uv.y);
+		tv = TileTransformTools.getVertexValuesAlongEdge(edgeFrom, k+thickness);
+		pg.vertex(tv.position.x, tv.position.y, tv.uv.x, tv.uv.y);
+		tv = TileTransformTools.getVertexValuesAlongEdge(edgeTo, (1-k));
+		pg.vertex(tv.position.x, tv.position.y, tv.uv.x, tv.uv.y);
+		tv = TileTransformTools.getVertexValuesAlongEdge(edgeTo, (1-k+thickness));
+		pg.vertex(tv.position.x, tv.position.y, tv.uv.x, tv.uv.y);
+		pg.endShape();
+	}
+}
 
 void mousePressed(){
 	Input.mousePressed();

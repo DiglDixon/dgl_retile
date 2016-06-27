@@ -20,7 +20,7 @@ void displayTilesInIterationsToGraphics(Tile[] tiles, PGraphics pg){
 	iterationCanvases[cIteration].beginDraw();
 	iterationCanvases[cIteration].clear();
 	for(int k = cIteration; k<tiles.length; k+=iterations){
-		tiles[k].display(iterationCanvases[cIteration]);
+		// tiles[k].display(iterationCanvases[cIteration]);
 	}
 	iterationCanvases[cIteration].endDraw();
 

@@ -8,7 +8,7 @@ interface Mutator{
 //
 
 public void displaySelectedWithWeights(Selection selection, PGraphics pg){
-	pg.stroke(255, 50);
+	pg.stroke(255, 0, 0, 50);
 	pg.noFill();
 	for(int k = 0; k<selection.contents.length; k++){
 		pg.strokeWeight(selection.weights[k]*4);
